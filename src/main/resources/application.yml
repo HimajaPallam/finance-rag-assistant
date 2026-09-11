@@ -9,15 +9,6 @@ spring:
       max-file-size: 25MB
       max-request-size: 25MB
 
-# ---------------------------------------------------------------------------
-# RAG configuration. Everything here runs 100% locally via Ollama - no API
-# keys, no paid services. Install Ollama from https://ollama.com/download and
-# pull the two models below before starting this app:
-#
-#   ollama pull llama3.2          (generation model, ~2GB, use llama3.2:1b
-#                                   if your laptop has < 8GB RAM)
-#   ollama pull nomic-embed-text  (embedding model, ~270MB)
-# ---------------------------------------------------------------------------
 finance-rag:
   ollama:
     base-url: http://localhost:11434

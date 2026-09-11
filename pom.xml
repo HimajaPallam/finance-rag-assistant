@@ -15,7 +15,7 @@
     <artifactId>finance-rag-assistant</artifactId>
     <version>1.0.0</version>
     <name>finance-rag-assistant</name>
-    <description>RAG-based Q&amp;A assistant over financial filings (10-K/10-Q), built with Spring Boot + LangChain4j + Ollama (fully local, free, no API keys)</description>
+    <description>RAG-based assistant over financial filings (10-K/10-Q)</description>
 
     <properties>
         <java.version>21</java.version>
