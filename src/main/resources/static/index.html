@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Finance RAG Assistant</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Arial, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  .panel { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  textarea, input[type=file] { width: 100%; box-sizing: border-box; }
+  textarea { height: 70px; font-family: inherit; font-size: 1rem; padding: 8px; }
+  button { padding: 8px 16px; cursor: pointer; }
+  #answer { white-space: pre-wrap; line-height: 1.5; }
+  .source { background: #f7f7f7; border-left: 3px solid #999; padding: 8px 12px; margin: 8px 0; font-size: 0.85rem; }
+  .score { color: #666; }
+  .status { font-size: 0.85rem; color: #666; }
+</style>
+</head>
+<body>
+  <h1>Finance RAG Assistant</h1>
+  <p class="status">Runs entirely on your machine via Ollama. No data leaves your laptop.</p>
+
+  <div class="panel">
+    <h3>1. Ingest a filing</h3>
+    <input type="file" id="fileInput" accept=".txt,.html">
+    <button onclick="uploadFile()">Upload &amp; index</button>
+    <p id="uploadStatus" class="status"></p>
+  </div>
+
+  <div class="panel">
+    <h3>2. Ask a question</h3>
+    <textarea id="question" placeholder="e.g. What are the main risk factors mentioned in the filing?"></textarea>
+    <br><br>
+    <button onclick="ask()">Ask</button>
+    <p id="askStatus" class="status"></p>
+    <div id="answer"></div>
+    <div id="sources"></div>
+  </div>
+
+<script>
+async function uploadFile() {
+  const input = document.getElementById('fileInput');
+  const status = document.getElementById('uploadStatus');
+  if (!input.files.length) { status.textContent = 'Choose a file first.'; return; }
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  status.textContent = 'Indexing...';
+  try {
+    const res = await fetch('/api/documents', { method: 'POST', body: formData });
+    const data = await res.json();
+    status.textContent = res.ok
+      ? `Indexed "${data.documentName}" as ${data.chunksIndexed} chunks.`
+      : `Error: ${data.error}`;
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function ask() {
+  const question = document.getElementById('question').value.trim();
+  const status = document.getElementById('askStatus');
+  const answerEl = document.getElementById('answer');
+  const sourcesEl = document.getElementById('sources');
+  answerEl.textContent = '';
+  sourcesEl.innerHTML = '';
+  if (!question) { status.textContent = 'Type a question first.'; return; }
+  status.textContent = 'Thinking... (first call is slower while Ollama loads the model)';
+  try {
+    const res = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+    const data = await res.json();
+    status.textContent = '';
+    answerEl.textContent = data.answer;
+    sourcesEl.innerHTML = '<h4>Sources</h4>' + data.sources.map(s =>
+      `<div class="source"><span class="score">${s.documentName} #${s.chunkIndex} (score ${s.score.toFixed(2)})</span><br>${s.text}</div>`
+    ).join('');
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
