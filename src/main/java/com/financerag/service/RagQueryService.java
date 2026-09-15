@@ -44,7 +44,7 @@ public class RagQueryService {
     public RagQueryService(EmbeddingModel embeddingModel,
                             EmbeddingStore<TextSegment> embeddingStore,
                             ChatLanguageModel chatLanguageModel,
-                            @Value("${finance-rag.retrieval.top-k") int topK,
+                            @Value("${finance-rag.retrieval.top-k}") int topK,
                             @Value("${finance-rag.retrieval.min-score}") double minScore) {
         this.embeddingModel = embeddingModel;
         this.embeddingStore = embeddingStore;
