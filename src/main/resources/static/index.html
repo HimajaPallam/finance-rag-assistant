@@ -23,6 +23,10 @@
   <div class="panel">
     <h3>1. Ingest a filing</h3>
     <input type="file" id="fileInput" accept=".txt,.html">
+    <br><br>
+    <input type="text" id="uploadCompany" list="knownCompanies" placeholder="Company this filing belongs to, e.g. Apple (optional)">
+    <datalist id="knownCompanies"></datalist>
+    <br><br>
     <button onclick="uploadFile()">Upload &amp; index</button>
     <p id="uploadStatus" class="status"></p>
   </div>
@@ -31,6 +35,8 @@
     <h3>2. Ask a question</h3>
     <textarea id="question" placeholder="e.g. What are the main risk factors mentioned in the filing?"></textarea>
     <br><br>
+    <input type="text" id="askCompany" list="knownCompanies" placeholder="Restrict to one company, e.g. Apple (optional - leave blank to search everything)">
+    <br><br>
     <button onclick="ask()">Ask</button>
     <p id="askStatus" class="status"></p>
     <div id="answer"></div>
@@ -38,19 +44,34 @@
   </div>
 
 <script>
+async function refreshKnownCompanies() {
+  try {
+    const res = await fetch('/api/companies');
+    const companies = await res.json();
+    document.getElementById('knownCompanies').innerHTML =
+      companies.map(c => `<option value="${c}">`).join('');
+  } catch (e) {
+    // Non-fatal - the free-text inputs still work without the autocomplete list.
+  }
+}
+refreshKnownCompanies();
+
 async function uploadFile() {
   const input = document.getElementById('fileInput');
+  const company = document.getElementById('uploadCompany').value.trim();
   const status = document.getElementById('uploadStatus');
   if (!input.files.length) { status.textContent = 'Choose a file first.'; return; }
   const formData = new FormData();
   formData.append('file', input.files[0]);
+  if (company) { formData.append('company', company); }
   status.textContent = 'Indexing...';
   try {
     const res = await fetch('/api/documents', { method: 'POST', body: formData });
     const data = await res.json();
     status.textContent = res.ok
-      ? `Indexed "${data.documentName}" as ${data.chunksIndexed} chunks.`
+      ? `Indexed "${data.documentName}" as ${data.chunksIndexed} chunks under company "${data.company}".`
       : `Error: ${data.error}`;
+    if (res.ok) { refreshKnownCompanies(); }
   } catch (e) {
     status.textContent = 'Error: ' + e.message;
   }
@@ -58,6 +79,7 @@ async function uploadFile() {
 
 async function ask() {
   const question = document.getElementById('question').value.trim();
+  const company = document.getElementById('askCompany').value.trim();
   const status = document.getElementById('askStatus');
   const answerEl = document.getElementById('answer');
   const sourcesEl = document.getElementById('sources');
@@ -66,16 +88,17 @@ async function ask() {
   if (!question) { status.textContent = 'Type a question first.'; return; }
   status.textContent = 'Thinking... (first call is slower while Ollama loads the model)';
   try {
+    const body = company ? { question, company } : { question };
     const res = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     status.textContent = '';
     answerEl.textContent = data.answer;
     sourcesEl.innerHTML = '<h4>Sources</h4>' + data.sources.map(s =>
-      `<div class="source"><span class="score">${s.documentName} #${s.chunkIndex} (score ${s.score.toFixed(2)})</span><br>${s.text}</div>`
+      `<div class="source"><span class="score">[${s.companyName}] ${s.documentName} #${s.chunkIndex} (score ${s.score.toFixed(2)})</span><br>${s.text}</div>`
     ).join('');
   } catch (e) {
     status.textContent = 'Error: ' + e.message;

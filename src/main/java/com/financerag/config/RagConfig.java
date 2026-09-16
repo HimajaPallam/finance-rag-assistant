@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 /**
  * Wires up all the RAG building blocks:
@@ -54,12 +55,16 @@ public class RagConfig {
     @Value("${finance-rag.vector-store.persist-path}")
     private String vectorStorePersistPath;
 
+    @Value("${finance-rag.ollama.timeout-seconds}")
+    private int ollamaTimeoutSeconds;
+
     @Bean
     public ChatLanguageModel chatLanguageModel() {
         return OllamaChatModel.builder()
                 .baseUrl(ollamaBaseUrl)
                 .modelName(chatModelName)
                 .temperature(0.1) // low temperature: we want grounded, repeatable answers, not creativity
+                .timeout(Duration.ofSeconds(ollamaTimeoutSeconds))
                 .build();
     }
 
@@ -68,6 +73,7 @@ public class RagConfig {
         return OllamaEmbeddingModel.builder()
                 .baseUrl(ollamaBaseUrl)
                 .modelName(embeddingModelName)
+                .timeout(Duration.ofSeconds(ollamaTimeoutSeconds))
                 .build();
     }
 

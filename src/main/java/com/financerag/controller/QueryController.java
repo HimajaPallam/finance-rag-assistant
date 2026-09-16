@@ -25,7 +25,8 @@ public class QueryController {
         if (request.getQuestion() == null || request.getQuestion().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        RagQueryService.AnswerWithSources result = ragQueryService.answer(request.getQuestion());
-        return ResponseEntity.ok(new AskResponse(request.getQuestion(), result.answer(), result.sources()));
+        RagQueryService.AnswerWithSources result = ragQueryService.answer(request.getQuestion(), request.getCompany());
+        return ResponseEntity.ok(
+                new AskResponse(request.getQuestion(), request.getCompany(), result.answer(), result.sources()));
     }
 }

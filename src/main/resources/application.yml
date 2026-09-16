@@ -14,11 +14,14 @@ finance-rag:
     base-url: http://localhost:11434
     chat-model: llama3.2
     embedding-model: nomic-embed-text
+    timeout-seconds: 150   # generous read timeout for CPU-only local inference, especially the first (cold-start) call
   ingestion:
     chunk-size: 800       # characters per chunk
     chunk-overlap: 100    # character overlap between consecutive chunks
   retrieval:
-    top-k: 4              # number of chunks retrieved per question
+    top-k: 3              # number of chunks retrieved per question
     min-score: 0.5        # cosine-similarity floor; chunks below this are discarded
   vector-store:
     persist-path: ./data/vector-store.json
+    companies-path: ./data/companies.json   # tracks distinct company names seen at ingestion, for the company-scope filter/dropdown
+

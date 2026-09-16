@@ -1,0 +1,78 @@
+[SAMPLE / FICTIONAL DOCUMENT - FOR TESTING ONLY]
+
+This is a synthetic excerpt, written to look like a company's 10-K filing, so
+you can smoke-test the ingestion and question-answering pipeline immediately
+without needing network access to SEC EDGAR. It does NOT describe a real
+company. Once your setup works against this file, run scripts/fetch_sec_filing.sh
+to pull a REAL 10-K filing from SEC EDGAR and re-test against real data.
+
+ITEM 1. BUSINESS OVERVIEW
+
+Example Corp ("the Company") is a diversified financial technology company
+that provides payment processing, lending, and wealth-management software to
+banks and credit unions across North America and Europe. The Company was
+founded in 2011 and is headquartered in Boston, Massachusetts. As of the most
+recent fiscal year end, the Company employed approximately 4,200 people and
+served over 600 financial institution clients.
+
+The Company operates in three reportable segments: Payments, Lending
+Technology, and Wealth Management Software. The Payments segment generated
+approximately 48% of total revenue, Lending Technology generated 31%, and
+Wealth Management Software generated the remaining 21%.
+
+ITEM 1A. RISK FACTORS
+
+The Company's business is subject to a number of risks, including but not
+limited to the following:
+
+1. Regulatory risk. The Company's products are subject to extensive financial
+   services regulation, including anti-money-laundering (AML) rules, data
+   privacy laws such as GDPR and CCPA, and payment card industry (PCI-DSS)
+   standards. Changes in regulation, or failure to comply with existing
+   regulation, could result in fines, loss of licenses, or reputational harm.
+
+2. Cybersecurity risk. As a processor of sensitive financial data, the
+   Company is a target for cyberattacks. A successful breach could result in
+   the loss of customer data, regulatory penalties, litigation, and loss of
+   client trust.
+
+3. Interest rate sensitivity. A significant portion of revenue in the Lending
+   Technology segment is tied to loan origination volume, which historically
+   declines when interest rates rise. A sustained high-rate environment could
+   reduce segment revenue by an estimated 10-15%.
+
+4. Client concentration. The Company's top ten clients accounted for
+   approximately 34% of total revenue in the most recent fiscal year. The
+   loss of one or more of these clients could have a material adverse effect
+   on revenue.
+
+5. Competition. The Company competes with both large incumbent financial
+   software vendors and well-funded fintech startups. Increased competition
+   could pressure pricing and margins.
+
+ITEM 7. MANAGEMENT'S DISCUSSION AND ANALYSIS (MD&A)
+
+Total revenue for the most recent fiscal year was $612 million, an increase
+of 14% year-over-year, driven primarily by growth in the Payments segment
+(+22% YoY) as the Company onboarded 45 new financial institution clients.
+Lending Technology segment revenue declined 3% YoY, consistent with the
+higher-interest-rate environment described in Item 1A.
+
+Operating expenses increased 9% YoY to $498 million, primarily due to
+increased headcount in engineering and compliance functions to support
+regulatory requirements in newly entered European markets.
+
+Net income was $71 million, compared to $54 million in the prior fiscal
+year, representing a net margin of 11.6%.
+
+The Company's cash and cash equivalents at fiscal year end were $210 million,
+with no outstanding long-term debt. The Board of Directors approved a share
+repurchase program of up to $50 million during the fiscal year, of which
+$18 million had been executed as of fiscal year end.
+
+ITEM 9A. CONTROLS AND PROCEDURES
+
+Management, including the Chief Executive Officer and Chief Financial
+Officer, evaluated the effectiveness of the Company's disclosure controls and
+procedures and concluded that they were effective as of the end of the period
+covered by this report.

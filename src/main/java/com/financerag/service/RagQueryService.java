@@ -10,6 +10,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
 /**
  * The actual "RAG" step: given a question,
@@ -56,24 +59,38 @@ public class RagQueryService {
     public record AnswerWithSources(String answer, List<SourceChunk> sources) {
     }
 
+    /** Unscoped convenience overload: searches across every ingested company, as before this feature existed. */
     public AnswerWithSources answer(String question) {
+        return answer(question, null);
+    }
+
+    public AnswerWithSources answer(String question, String company) {
         Response<Embedding> questionEmbedding = embeddingModel.embed(question);
 
-        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+        EmbeddingSearchRequest.EmbeddingSearchRequestBuilder searchRequestBuilder = EmbeddingSearchRequest.builder()
                 .queryEmbedding(questionEmbedding.content())
                 .maxResults(topK)
-                .minScore(minScore)
-                .build();
+                .minScore(minScore);
 
-        EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
+        boolean scoped = company != null && !company.isBlank();
+        if (scoped) {
+            Filter companyFilter = metadataKey("companyName").isEqualTo(company.trim());
+            searchRequestBuilder.filter(companyFilter);
+        }
+
+        EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequestBuilder.build());
         List<EmbeddingMatch<TextSegment>> matches = searchResult.matches();
 
         if (matches.isEmpty()) {
-            log.info("No chunks above minScore={} for question: {}", minScore, question);
-            return new AnswerWithSources(
-                    "I couldn't find anything relevant in the ingested documents to answer that. "
-                            + "Try rephrasing, or ingest a document that covers this topic.",
-                    List.of());
+            log.info("No chunks above minScore={} for question (company scope={}): {}",
+                    minScore, scoped ? company.trim() : "ALL", question);
+            String noMatchMessage = scoped
+                    ? "I couldn't find anything relevant to \"" + company.trim() + "\" in the ingested documents "
+                    + "to answer that. Check the company name matches exactly what it was ingested under, "
+                    + "or try without a company filter."
+                    : "I couldn't find anything relevant in the ingested documents to answer that. "
+                    + "Try rephrasing, or ingest a document that covers this topic.";
+            return new AnswerWithSources(noMatchMessage, List.of());
         }
 
         String context = matches.stream()
@@ -88,6 +105,7 @@ public class RagQueryService {
         List<SourceChunk> sources = matches.stream()
                 .map(m -> new SourceChunk(
                         m.embedded().metadata().getString("documentName"),
+                        m.embedded().metadata().getString("companyName"),
                         Integer.parseInt(m.embedded().metadata().getString("chunkIndex")),
                         m.score(),
                         m.embedded().text()))
