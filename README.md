@@ -5,7 +5,7 @@ A Retrieval-Augmented Generation (RAG) Q&A assistant over financial filings
 LangChain4j. Ask a question in plain English, get an answer grounded in the
 actual filing text, with citations back to the exact chunk it came from.
 
-The LLM and embedding model both run through [Ollama] on oen machine.
+The LLM and embedding model both run through Ollama.
 ---
 
 ## Architecture
@@ -47,7 +47,7 @@ Key classes:
 
 ---
 
-## Setup
+## Setup (on your own laptop - free, no purchases needed)
 
 ### 1. Install Ollama
 
@@ -74,14 +74,6 @@ Start with the bundled synthetic sample:
 curl -F "file=@data/sample_filing.txt" http://localhost:8080/api/documents
 ```
 
-Once that works end-to-end, pull a **real** filing from SEC EDGAR (free,
-no API key, just requires identifying yourself per SEC's fair-access policy):
-
-```bash
-export SEC_USER_AGENT="Your Name your.email@example.com"
-./scripts/fetch_sec_filing.sh 0000320193   # Apple Inc.
-```
-
 ### 5. Ask questions
 
 Via the UI: open http://localhost:8080 in your browser.
@@ -93,6 +85,32 @@ curl -X POST http://localhost:8080/api/ask \
      -H "Content-Type: application/json" \
      -d '{"question": "What are the main risk factors mentioned?"}'
 ```
+
+
+### 6. Scoping questions to one company
+
+If you ingest filings from more than one company, an unscoped question
+searches every chunk from every company - which means a generic question
+like "what are the risk factors" can retrieve chunks from more than one
+filing at once and blend them into a single answer. To avoid that, tag each
+upload with a company and pass the same company when asking:
+
+```bash
+curl -F "file=@data/Apple_10K.html" -F "company=Apple" \
+     http://localhost:8080/api/documents
+
+curl -X POST http://localhost:8080/api/ask \
+     -H "Content-Type: application/json" \
+     -d '{"question": "What are the main risk factors?", "company": "Apple"}'
+```
+
+`GET /api/companies` lists every company name seen so far (used by the demo
+UI to populate an autocomplete list), which helps avoid a scoped question
+silently matching nothing because of a typo or case mismatch - the "company"
+filter is an exact string match. Omitting "company" on either call preserves
+the original, unscoped behavior.
+
+---
 
 ## Project structure
 
@@ -115,3 +133,17 @@ finance-rag-assistant/
         ├── application.yml
         └── static/index.html    # minimal demo UI
 ```
+## Tech stack
+
+| Layer                  | Technology                                      | Purpose                                                          |
+|-------------------------|--------------------------------------------------|-------------------------------------------------------------------|
+| Language                | Java 17                                          | Core application language                                        |
+| Framework                | Spring Boot 3.3.4                                | REST API, dependency injection, embedded Tomcat server            |
+| LLM orchestration        | LangChain4j 0.35.0                               | Document splitting, embeddings, vector search, prompt construction |
+| LLM runtime              | [Ollama](https://ollama.com)                     | Runs the models locally - no cloud, no API key, no per-token cost |
+| Chat / generation model  | `llama3.2` (via Ollama)                          | Generates the grounded natural-language answer                   |
+| Embedding model          | `nomic-embed-text` (via Ollama)                  | Turns text chunks and questions into vectors for similarity search |
+| Vector storage           | LangChain4j `InMemoryEmbeddingStore`             | Holds chunk embeddings in memory, persisted to a local JSON file  |
+| HTML parsing             | Jsoup 1.18.1                                     | Strips HTML/markup noise out of upload documents before chunking |
+| Build tool               | Maven                                            | Dependency management and build lifecycle                        |
+| Testing                  | JUnit 5 + Spring Boot Test                       | Automated integration tests against a live Ollama instance        |
